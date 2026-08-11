@@ -1,0 +1,42 @@
+# ============================================================
+# LUXDRIVE — FastAPI Backend Dependencies
+# Install: pip install -r requirements.txt
+# ============================================================
+
+# ── Web Framework ────────────────────────────────────────────
+fastapi==0.115.4
+uvicorn[standard]==0.32.0
+
+# ── Data Validation (Pydantic v2) ────────────────────────────
+pydantic==2.9.2
+pydantic-settings==2.6.1
+email-validator==2.2.0
+
+# ── Supabase ─────────────────────────────────────────────────
+supabase==2.10.0
+httpx==0.27.2
+
+# ── Authentication / Security ─────────────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.12
+
+# ── Environment Variables ─────────────────────────────────────
+python-dotenv==1.0.1
+
+# ── Date / Time ───────────────────────────────────────────────
+python-dateutil==2.9.0.post0
+
+# ── Decimal / Financial Arithmetic ───────────────────────────
+# Python's built-in decimal module is used — no extra package needed
+
+# ── HTTP Client ───────────────────────────────────────────────
+requests==2.32.3
+
+# ── Testing ───────────────────────────────────────────────────
+pytest==8.3.3
+pytest-asyncio==0.24.0
+httpx==0.27.2
+
+# ── Code Quality ──────────────────────────────────────────────
+ruff==0.7.1
