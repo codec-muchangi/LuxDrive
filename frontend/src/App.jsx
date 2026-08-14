@@ -25,7 +25,29 @@ import {
 
 // ── Lazy-loaded pages will be added as we build them ─────────
 // For now we use placeholder components so the router works
-import ComingSoon from '@/pages/ComingSoon.jsx'
+import Home from '@/pages/Home'
+// Temporary placeholder for routes not yet built
+const ComingSoon = ({ page }) => (
+  <div style={{
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#0A0A0A',
+    color: '#F5F5F0',
+    fontFamily: "'Manrope', sans-serif",
+    gap: '12px'
+  }}>
+    <span style={{ color: '#C9A84C', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+      LUXDRIVE
+    </span>
+    <h1 style={{ fontSize: '32px', margin: 0 }}>{page}</h1>
+    <p style={{ color: 'rgba(245,245,240,0.5)', fontSize: '14px', margin: 0 }}>
+      This page is being built.
+    </p>
+  </div>
+);
 
 function App() {
   return (
@@ -55,7 +77,7 @@ function App() {
 
         <Routes>
           {/* ── Public Routes ────────────────────────────── */}
-          <Route path="/"              element={<ComingSoon page="Home" />} />
+          <Route path="/"              element={<Home />} />
           <Route path="/cars"          element={<ComingSoon page="Cars" />} />
           <Route path="/cars/:id"      element={<ComingSoon page="Car Details" />} />
           <Route path="/services"      element={<ComingSoon page="Services" />} />
@@ -65,6 +87,7 @@ function App() {
           <Route path="/terms"         element={<ComingSoon page="Terms" />} />
           <Route path="/privacy"       element={<ComingSoon page="Privacy Policy" />} />
           <Route path="/unauthorized"  element={<ComingSoon page="Unauthorized" />} />
+          <Route path="/coming-soon"   element={<ComingSoon page="Coming Soon" />} />
 
           {/* ── Auth Routes (guests only) ─────────────────── */}
           <Route path="/login"           element={<GuestRoute><ComingSoon page="Login" /></GuestRoute>} />
@@ -105,7 +128,7 @@ function App() {
           <Route path="/admin/settings"            element={<AdminRoute><ComingSoon page="Settings" /></AdminRoute>} />
 
           {/* ── 404 ───────────────────────────────────────── */}
-          <Route path="*" element={<ComingSoon page="404 — Page Not Found" />} />
+          <Route path="*" element={<Home/>} />
         </Routes>
 
       </AuthProvider>

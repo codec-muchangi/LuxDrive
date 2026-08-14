@@ -8,6 +8,11 @@ export default {
   theme: {
     extend: {
       // ── LUXDRIVE Design System ──────────────────────────────
+      opacity: {
+      '8': '0.08',
+      '12': '0.12',
+      '15': '0.15',
+    },
       colors: {
         // Primary — Deep onyx black (hero backgrounds, nav, cards)
         primary: {

@@ -306,3 +306,26 @@
     text-wrap: balance;
   }
 }
+
+/* ── Hero entrance animation (used by Hero.jsx) ─────────── */
+@keyframes lux-up {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Date input colour fix for dark search fields ────────── */
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+
+/* ── Smooth scroll ───────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
