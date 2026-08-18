@@ -26,6 +26,8 @@ import {
 // ── Lazy-loaded pages will be added as we build them ─────────
 // For now we use placeholder components so the router works
 import Home from '@/pages/Home'
+import Login from '@/pages/auth/Login'
+import Register from '@/pages/auth/Register'
 // Temporary placeholder for routes not yet built
 const ComingSoon = ({ page }) => (
   <div style={{
@@ -90,8 +92,8 @@ function App() {
           <Route path="/coming-soon"   element={<ComingSoon page="Coming Soon" />} />
 
           {/* ── Auth Routes (guests only) ─────────────────── */}
-          <Route path="/login"           element={<GuestRoute><ComingSoon page="Login" /></GuestRoute>} />
-          <Route path="/register"        element={<GuestRoute><ComingSoon page="Register" /></GuestRoute>} />
+          <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+          <Route path="/register"  element={<GuestRoute><Register/></GuestRoute>} />
           <Route path="/forgot-password" element={<GuestRoute><ComingSoon page="Forgot Password" /></GuestRoute>} />
           <Route path="/auth/reset-password" element={<ComingSoon page="Reset Password" />} />
           <Route path="/auth/callback"   element={<ComingSoon page="Auth Callback" />} />
