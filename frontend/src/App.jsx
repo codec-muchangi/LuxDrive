@@ -29,6 +29,7 @@ import Home from '@/pages/Home'
 import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
+import Resetpassword from '@/pages/auth/ResetPassword'
 // Temporary placeholder for routes not yet built
 const ComingSoon = ({ page }) => (
   <div style={{
@@ -96,7 +97,7 @@ function App() {
           <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
           <Route path="/register"  element={<GuestRoute><Register/></GuestRoute>} />
           <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
-          <Route path="/auth/reset-password" element={<ComingSoon page="Reset Password" />} />
+          <Route path="/auth/reset-password" element={<GuestRoute><ResetPassword /></GuestRoute>} />
           <Route path="/auth/callback"   element={<ComingSoon page="Auth Callback" />} />
           <Route path="/auth/verify"     element={<ComingSoon page="Verify Email" />} />
 
