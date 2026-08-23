@@ -29,7 +29,7 @@ import Home from '@/pages/Home'
 import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
-import Resetpassword from '@/pages/auth/ResetPassword'
+import ResetPassword from '@/pages/auth/ResetPassword'
 // Temporary placeholder for routes not yet built
 const ComingSoon = ({ page }) => (
   <div style={{
