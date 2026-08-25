@@ -29,7 +29,7 @@ import toast                                                  from 'react-hot-to
 import { useAuth }                                            from '@/context/AuthContext'
 import { supabase }                                           from '@/lib/supabase'
 import { ROUTES }                                             from '@/utils/constants'
-
+import { useNavigate } from 'react-router-dom'
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const EMAIL_RE   = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -94,7 +94,7 @@ const onBlurReset  = (e, hasError) => {
 
 export default function Register() {
     const { signUp } = useAuth()
-
+    const navigate = useNavigate()
 
   // ── Form data ──────────────────────────────────────────────────────────────
     const [formData, setFormData] = useState({
@@ -168,7 +168,7 @@ export default function Register() {
         phone:    formData.phone.trim(),
         })
         toast.success('Account created! Please verify your email.')
-        setSuccess(true)
+          navigate(ROUTES.VERIFY_EMAIL, { state: { email: formData.email.trim() } })
     } catch (err) {
         const msg = friendlySignUpError(err?.message)
         setGeneralError(msg)
