@@ -167,8 +167,9 @@ export default function Register() {
         fullName: formData.fullName.trim(),
         phone:    formData.phone.trim(),
         })
-        toast.success('Account created! Please verify your email.')
-          navigate(ROUTES.VERIFY_EMAIL, { state: { email: formData.email.trim() } })
+        // REPLACE WITH THIS:
+      toast.success('Welcome to LUXDRIVE! Account created successfully.')
+      navigate(ROUTES.DASHBOARD, { replace: true })
     } catch (err) {
         const msg = friendlySignUpError(err?.message)
         setGeneralError(msg)
