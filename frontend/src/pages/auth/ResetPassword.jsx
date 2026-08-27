@@ -29,8 +29,8 @@
 import { useState, useMemo }                         from 'react'
 import { Link, useNavigate }                         from 'react-router-dom'
 import { Lock, Eye, EyeOff, ArrowLeft,
-         Loader2, CheckCircle2, Circle,
-         AlertCircle }                               from 'lucide-react'
+            Loader2, CheckCircle2, Circle,
+            AlertCircle }                               from 'lucide-react'
 import toast                                         from 'react-hot-toast'
 import { useAuth }                                   from '@/context/AuthContext'
 import { ROUTES }                                    from '@/utils/constants'
