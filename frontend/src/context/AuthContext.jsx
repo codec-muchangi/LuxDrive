@@ -1,116 +1,109 @@
 /**
- * LUXDRIVE — Authentication Context
+ * LUXDRIVE — AuthContext.jsx
+ * frontend/src/context/AuthContext.jsx
  *
- * Central auth state provider. Wraps the entire app.
- * Provides:
- *   - session / user / profile
- *   - loading states
- *   - auth methods: signIn, signUp, signOut, resetPassword
- *   - role helpers: isCustomer, isAdmin
- *
- * Auth states:
- *   INITIALIZING → AUTHENTICATED | UNAUTHENTICATED
- *
- * Security note:
- *   The role is sourced from the profiles table in the DB,
- *   not from the JWT or any client-side value.
+ * FIX: Session is set BEFORE any navigation fires.
+ *      AuthContext never calls navigate() itself — that belongs
+ *      in Login.jsx after the await resolves.
+ *      ProtectedRoute reads `loading` to avoid bouncing the user
+ *      back to /login while Supabase is still hydrating.
  */
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
-import { authAPI } from '@/services/api'
+import { createContext, useContext, useEffect, useState } from "react"
+import { supabase } from "../lib/supabase"           // adjust path if needed
+import toast from "react-hot-toast"
 
-// ── Context ────────────────────────────────────────────────────
+// ── Context ─────────────────────────────────────────────────────────────────
 const AuthContext = createContext(null)
 
-// ── Auth States ────────────────────────────────────────────────
-export const AUTH_STATE = {
-  INITIALIZING:    'INITIALIZING',
-  AUTHENTICATED:   'AUTHENTICATED',
-  UNAUTHENTICATED: 'UNAUTHENTICATED',
-  ERROR:           'ERROR',
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>")
+  return ctx
 }
 
-// ── Provider ───────────────────────────────────────────────────
+// ── Provider ─────────────────────────────────────────────────────────────────
 export function AuthProvider({ children }) {
-  const [authState, setAuthState]   = useState(AUTH_STATE.INITIALIZING)
-  const [session, setSession]       = useState(null)
-  const [user, setUser]             = useState(null)     // Supabase Auth user
-  const [profile, setProfile]       = useState(null)     // LUXDRIVE profile (role, status, etc.)
-  const [profileLoading, setProfileLoading] = useState(false)
-  const [profileError, setProfileError]     = useState(null)
+  const [user,    setUser]    = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [session, setSession] = useState(null)
 
-  // ── Load Profile from FastAPI ────────────────────────────────
-  // Called after Supabase Auth confirms the session.
-  // FastAPI returns the profile with role & account_status from DB.
-  const loadProfile = useCallback(async () => {
-    setProfileLoading(true)
-    setProfileError(null)
+  /**
+   * loading = true  →  Supabase is still checking the stored session.
+   *                    ProtectedRoute must render null/spinner, NOT redirect.
+   * loading = false →  We know the auth state. Redirect decisions are safe.
+   */
+  const [loading, setLoading] = useState(true)
+
+  // ── Fetch the LUXDRIVE profile row after auth ──────────────────────────
+  const fetchProfile = async (userId) => {
+    if (!userId) return null
     try {
-      const response = await authAPI.me()
-      setProfile(response.data?.data || response.data)
-      setAuthState(AUTH_STATE.AUTHENTICATED)
-    } catch (err) {
-      console.error('[AuthContext] Failed to load profile:', err)
-      setProfileError(err)
-      // If we can't load the profile, treat as unauthenticated
-      // to avoid showing partial/incorrect UI
-      setAuthState(AUTH_STATE.UNAUTHENTICATED)
-    } finally {
-      setProfileLoading(false)
-    }
-  }, [])
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single()
 
-  // ── Session Initialisation ───────────────────────────────────
-  // On mount, check if a session already exists (page refresh, etc.)
+      if (error) {
+        console.error("[AuthContext] fetchProfile error:", error.message)
+        return null
+      }
+      return data
+    } catch (err) {
+      console.error("[AuthContext] fetchProfile unexpected:", err)
+      return null
+    }
+  }
+
+  // ── Initialise: check existing session on mount ───────────────────────
   useEffect(() => {
     let mounted = true
 
-    const initialise = async () => {
+    const init = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession()
+        const { data: { session: existingSession } } = await supabase.auth.getSession()
 
-        if (!mounted) return
-
-        if (currentSession) {
-          setSession(currentSession)
-          setUser(currentSession.user)
-          await loadProfile()
-        } else {
-          setAuthState(AUTH_STATE.UNAUTHENTICATED)
+        if (mounted) {
+          if (existingSession) {
+            setSession(existingSession)
+            setUser(existingSession.user)
+            const p = await fetchProfile(existingSession.user.id)
+            if (mounted) setProfile(p)
+          }
+          // Always mark loading done regardless of whether a session exists
+          setLoading(false)
         }
       } catch (err) {
-        if (!mounted) return
-        console.error('[AuthContext] Initialisation error:', err)
-        setAuthState(AUTH_STATE.UNAUTHENTICATED)
+        console.error("[AuthContext] init error:", err)
+        if (mounted) setLoading(false)
       }
     }
 
-    initialise()
+    init()
 
-    // ── Subscribe to auth state changes ──────────────────────
-    // Handles: login, logout, token refresh, password reset, email confirm
+    // ── Listen for auth state changes (login / logout / token refresh) ──
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!mounted) return
 
-        if (import.meta.env.DEV) {
-          console.log('[AuthContext] Auth event:', event)
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+          setSession(newSession)
+          setUser(newSession?.user ?? null)
+          if (newSession?.user) {
+            const p = await fetchProfile(newSession.user.id)
+            if (mounted) setProfile(p)
+          }
+          // NOTE: we do NOT navigate here.
+          // Login.jsx calls navigate() AFTER its await resolves.
+          setLoading(false)
         }
 
-        if (newSession) {
-          setSession(newSession)
-          setUser(newSession.user)
-
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            await loadProfile()
-          }
-        } else {
-          // Signed out or session expired
+        if (event === "SIGNED_OUT") {
           setSession(null)
           setUser(null)
           setProfile(null)
-          setAuthState(AUTH_STATE.UNAUTHENTICATED)
+          setLoading(false)
         }
       }
     )
@@ -119,95 +112,77 @@ export function AuthProvider({ children }) {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [loadProfile])
+  }, [])
 
-  // ── Auth Methods ─────────────────────────────────────────────
+  // ── Auth actions ─────────────────────────────────────────────────────────
 
+  /**
+   * signIn — returns { error } so Login.jsx can decide whether to navigate.
+   * Never throws; always returns a result object.
+   */
   const signIn = async ({ email, password }) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.toLowerCase().trim(),
-      password,
-    })
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      })
+      if (error) return { error }
+      // State is set by onAuthStateChange above — just return success
+      return { error: null, user: data.user }
+    } catch (err) {
+      return { error: { message: "Unexpected error. Please try again." } }
+    }
   }
 
-  const signUp = async ({ email, password, fullName, phone }) => {
-    const { data, error } = await supabase.auth.signUp({
-      email: email.toLowerCase().trim(),
-      password,
-      options: {
-        data: {
-          full_name: fullName.trim(),
-          phone: phone?.trim() || null,
+  /**
+   * signUp — creates the Supabase auth user.
+   * The profiles trigger in Supabase creates the profile row automatically.
+   */
+  const signUp = async ({ email, password, fullName }) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          data: { full_name: fullName },
         },
-        // Redirect URL after email confirmation
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (error) throw error
-    return data
+      })
+      if (error) return { error }
+      return { error: null, user: data.user }
+    } catch (err) {
+      return { error: { message: "Unexpected error. Please try again." } }
+    }
   }
 
+  /** signOut — clears state; caller can redirect afterwards */
   const signOut = async () => {
-    setProfile(null)
-    setUser(null)
-    setSession(null)
-    setAuthState(AUTH_STATE.UNAUTHENTICATED)
-    const { error } = await supabase.auth.signOut()
-    if (error) console.error('[AuthContext] signOut error:', error)
+    try {
+      await supabase.auth.signOut()
+      toast.success("Signed out successfully")
+    } catch (err) {
+      console.error("[AuthContext] signOut error:", err)
+    }
   }
 
-  const resetPassword = async (email) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(
-      email.toLowerCase().trim(),
-      {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      }
-    )
-    if (error) throw error
-  }
+  // ── Derived helpers ───────────────────────────────────────────────────────
+  const isAuthenticated = !!user && !loading
+  const isAdmin         = profile?.role === "ADMIN"
+  const isCustomer      = profile?.role === "CUSTOMER"
+  const isActive        = profile?.account_status === "ACTIVE"
 
-  const updatePassword = async (newPassword) => {
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    if (error) throw error
-  }
-
-  const refreshProfile = useCallback(() => loadProfile(), [loadProfile])
-
-  // ── Derived State ─────────────────────────────────────────────
-  const isInitializing  = authState === AUTH_STATE.INITIALIZING
-  const isAuthenticated = authState === AUTH_STATE.AUTHENTICATED
-  const isAdmin         = isAuthenticated && profile?.role === 'ADMIN'
-  const isCustomer      = isAuthenticated && profile?.role === 'CUSTOMER'
-  const isActive        = profile?.account_status === 'ACTIVE'
-  const isEmailVerified = user?.email_confirmed_at != null
-
-  // ── Context Value ─────────────────────────────────────────────
+  // ── Value ─────────────────────────────────────────────────────────────────
   const value = {
-    // State
-    authState,
-    session,
     user,
     profile,
-    profileLoading,
-    profileError,
-
-    // Derived booleans
-    isInitializing,
+    session,
+    loading,
     isAuthenticated,
     isAdmin,
     isCustomer,
     isActive,
-    isEmailVerified,
-
-    // Methods
     signIn,
     signUp,
     signOut,
-    resetPassword,
-    updatePassword,
-    refreshProfile,
   }
 
   return (
@@ -215,15 +190,6 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-// ── Hook ───────────────────────────────────────────────────────
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
 }
 
 export default AuthContext

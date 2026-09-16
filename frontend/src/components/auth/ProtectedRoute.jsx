@@ -1,123 +1,91 @@
-/**
- * LUXDRIVE — Route Guards
- *
- * ProtectedRoute — requires authentication
- * AdminRoute     — requires ADMIN role
- * CustomerRoute  — requires CUSTOMER role
- *
- * These components provide UX-level route protection.
- * They do NOT replace server-side authorization in FastAPI.
- */
+import { Navigate, useLocation } from "react-router-dom"
+import { useAuth } from "../../context/AuthContext"
+import { ROUTES } from "../../constants/routes"
 
-import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth, AUTH_STATE } from '@/context/AuthContext'
-
-// ── Loading Spinner while auth initialises ─────────────────────
-function AuthLoading() {
+// ── Spinner shown while Supabase rehydrates the session ──────────────────────
+function AuthLoadingScreen() {
   return (
-    <div className="min-h-screen bg-primary-950 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 spinner" />
-        <p className="text-surface-400 text-sm font-sans tracking-wide">
-          Authenticating…
-        </p>
+    <div
+      style={{
+        display:         "flex",
+        flexDirection:   "column",
+        alignItems:      "center",
+        justifyContent:  "center",
+        height:          "100vh",
+        background:      "#0A0A0A",
+        gap:             16,
+      }}
+    >
+      {/* Gold spinning ring */}
+      <div style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid #2a2a2a", borderTopColor: "#eec453", animation: "luxSpin 0.75s linear infinite" }}>
       </div>
+      <span
+        style={{
+          fontFamily:    "'Manrope', sans-serif",
+          fontSize:      13,
+          fontWeight:    500,
+          color:         "#777",
+          letterSpacing: "0.04em",
+        }}
+      >
+        LUXDRIVE
+      </span>
+
+      <style>{`
+        @keyframes luxSpin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }
 
-// ── ProtectedRoute ─────────────────────────────────────────────
-// Requires any authenticated user
-export function ProtectedRoute({ children }) {
-  const { authState, isAuthenticated } = useAuth()
+// ── ProtectedRoute ────────────────────────────────────────────────────────────
+/**
+ * @param {object} props
+ * @param {React.ReactNode} props.children     — the page to render when authed
+ * @param {"ADMIN"|"CUSTOMER"|undefined} props.requiredRole — optional role gate
+ */
+export default function ProtectedRoute({ children, requiredRole }) {
+  const { user, profile, loading, isActive } = useAuth()
   const location = useLocation()
 
-  if (authState === AUTH_STATE.INITIALIZING) {
-    return <AuthLoading />
+  // ── 1. Still hydrating — show spinner, NEVER redirect yet ────────────────
+  if (loading) {
+    return <AuthLoadingScreen />
   }
 
-  if (!isAuthenticated) {
-    // Preserve the intended destination so we can redirect back after login
+  // ── 2. Not logged in — send to login, preserve intended destination ───────
+  if (!user) {
     return (
       <Navigate
-        to="/login"
-        state={{ from: location.pathname }}
+        to={ROUTES.LOGIN}
+        state={{ from: location }}
         replace
       />
     )
   }
 
-  return children
-}
-
-// ── AdminRoute ─────────────────────────────────────────────────
-// Requires ADMIN role
-export function AdminRoute({ children }) {
-  const { authState, isAuthenticated, isAdmin } = useAuth()
-  const location = useLocation()
-
-  if (authState === AUTH_STATE.INITIALIZING) {
-    return <AuthLoading />
-  }
-
-  if (!isAuthenticated) {
+  // ── 3. Logged in but account is suspended/disabled ────────────────────────
+  if (profile && !isActive) {
     return (
       <Navigate
-        to="/login"
-        state={{ from: location.pathname }}
+        to={ROUTES.LOGIN}
+        state={{ accountSuspended: true }}
         replace
       />
     )
   }
 
-  if (!isAdmin) {
-    // Authenticated but not an admin — show 403
-    return <Navigate to="/unauthorized" replace />
+  // ── 4. Role gate (e.g. admin-only pages) ──────────────────────────────────
+  if (requiredRole) {
+    const userRole = profile?.role
+    if (userRole !== requiredRole) {
+      // Customer hitting an admin page → send to cars listing
+      return <Navigate to={ROUTES.CARS} replace />
+    }
   }
 
-  return children
-}
-
-// ── CustomerRoute ──────────────────────────────────────────────
-// Requires CUSTOMER role specifically
-export function CustomerRoute({ children }) {
-  const { authState, isAuthenticated, isCustomer } = useAuth()
-  const location = useLocation()
-
-  if (authState === AUTH_STATE.INITIALIZING) {
-    return <AuthLoading />
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <Navigate
-        to="/login"
-        state={{ from: location.pathname }}
-        replace
-      />
-    )
-  }
-
-  if (!isCustomer) {
-    return <Navigate to="/unauthorized" replace />
-  }
-
-  return children
-}
-
-// ── GuestRoute ─────────────────────────────────────────────────
-// Only for unauthenticated users (login, register pages)
-// Redirects authenticated users to their dashboard
-export function GuestRoute({ children }) {
-  const { authState, isAuthenticated, isAdmin } = useAuth()
-
-  if (authState === AUTH_STATE.INITIALIZING) {
-    return <AuthLoading />
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace />
-  }
-
+  // ── 5. All checks pass ────────────────────────────────────────────────────
   return children
 }

@@ -1,20 +1,3 @@
-/**
- * LUXDRIVE — Car Overview Dashboard (CarDetails page)
- * Route: /cars/:id  →  frontend/src/pages/CarDetails.jsx
- *
- * Changes v3:
- *  · Real BMW M4 Competition photographs (Unsplash, no AI)
- *  · Removed AI Assistant panel
- *  · Font upgraded: Plus Jakarta Sans + Bebas Neue
- *  · Full-page vertical scroll — no overflow:hidden prison
- *  · Sticky sidebar + sticky header while content scrolls
- *  · Improved SVG speedometer with glow needle
- *  · BMW M4 overhead image in Car Highlights
- *  · BMW M4 side-profile image in Why section
- *  · LUXDRIVE logo bigger & thicker
- *  · Zero spacing waste — aspect-ratio images flow naturally
- */
-
 import { useState } from "react"
 import {
   LayoutGrid,

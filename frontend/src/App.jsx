@@ -31,7 +31,7 @@ import Register from '@/pages/auth/Register'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
 import ResetPassword from '@/pages/auth/ResetPassword'
 import VerifyEmail from './pages/auth/VerifyPassword'
-import CarDetails from './pages/CarDetails'
+import CarOverviewDashboard from './pages/.CarOverviewDashboard'
 // Temporary placeholder for routes not yet built
 const ComingSoon = ({ page }) => (
   <div style={{
@@ -85,7 +85,7 @@ function App() {
           {/* ── Public Routes ────────────────────────────── */}
           <Route path="/"              element={<Home />} />
           <Route path="/cars"          element={<ComingSoon page="Cars" />} />
-          <Route path="/cars/:id"      element={<CarDetails />} />
+          <Route path="/cars/:id"      element={<CarOverviewDashboard />} />
           <Route path="/services"      element={<ComingSoon page="Services" />} />
           <Route path="/about"         element={<ComingSoon page="About" />} />
           <Route path="/contact"       element={<ComingSoon page="Contact" />} />
