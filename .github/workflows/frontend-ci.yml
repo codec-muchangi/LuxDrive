@@ -1,6 +1,21 @@
-
+# ─────────────────────────────────────────────────────────────────────────────
+# WORKFLOW NAME
+# This is the label that appears in the GitHub Actions tab.
+# ─────────────────────────────────────────────────────────────────────────────
 name: Frontend CI
 
+# ─────────────────────────────────────────────────────────────────────────────
+# TRIGGER — When does this workflow run?
+#
+# It runs on two events:
+#
+# 1. push       → whenever you push commits to main or develop
+# 2. pull_request → whenever someone opens or updates a PR targeting main
+#
+# paths: means "only run if one of these files actually changed."
+# Without paths:, every single push would run this workflow — even if you
+# only edited a backend Python file. That wastes CI minutes.
+# ─────────────────────────────────────────────────────────────────────────────
 on:
   push:
     branches:
@@ -15,24 +30,48 @@ on:
     paths:
       - 'frontend/**'
 
-
+# ─────────────────────────────────────────────────────────────────────────────
+# JOBS — The actual work
+#
+# We only have one job here: frontend-checks.
+# It has a human-readable name shown in the GitHub UI.
+# It runs on ubuntu-latest — a free fresh Linux VM provided by GitHub.
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
   frontend-checks:
     name: Lint and Build
     runs-on: ubuntu-latest
 
-    
+    # defaults.run.working-directory tells GitHub that every `run:` command
+    # in this job should automatically start inside the frontend/ folder.
+    # Without this, you would need to write `cd frontend && npm ci` everywhere.
     defaults:
       run:
         working-directory: ./frontend
 
-    
+    # ─────────────────────────────────────────────────────────────────────────
+    # STEPS — run in order, top to bottom.
+    # If any step fails, GitHub stops and marks the whole job as failed.
+    # ─────────────────────────────────────────────────────────────────────────
     steps:
 
-      
+      # ── STEP 1 ──────────────────────────────────────────────────────────────
+      # The runner starts as a completely empty Ubuntu machine.
+      # actions/checkout@v4 is a pre-built action that clones your GitHub
+      # repository onto that machine so the rest of the steps can use your code.
+      # Without this step, the runner has no idea your project even exists.
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      
+      # ── STEP 2 ──────────────────────────────────────────────────────────────
+      # Install the correct version of Node.js.
+      #
+      # node-version: '20' — use Node 20 (LTS, matches what Vite 5 needs)
+      # cache: 'npm'       — GitHub remembers your node_modules between runs.
+      #                      This makes every run after the first much faster
+      #                      because it skips re-downloading all your packages.
+      # cache-dependency-path — tells the cache which file to watch. If
+      #                          package-lock.json changes, the cache resets.
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -40,19 +79,50 @@ on:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      
+      # ── STEP 3 ──────────────────────────────────────────────────────────────
+      # Install your npm dependencies.
+      #
+      # `npm ci` is the correct command for CI environments — NOT `npm install`.
+      # The difference:
+      #   npm install  — may update package-lock.json if versions drift
+      #   npm ci       — reads package-lock.json exactly as written, fails if
+      #                  anything is out of sync. Guarantees reproducible builds.
       - name: Install dependencies
         run: npm ci
 
-      
+      # ── STEP 4 ──────────────────────────────────────────────────────────────
+      # Run ESLint to check code quality.
+      #
+      # If any ESLint rule is violated, this step fails and the job stops here.
+      # This means bad code style or obvious mistakes are caught automatically —
+      # you do not need to manually review every PR for lint issues.
+      #
+      # This runs the "lint" script from your package.json:
+      # "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
       - name: Run ESLint
         run: npm run lint
 
-      
+      # ── STEP 5 ──────────────────────────────────────────────────────────────
+      # Run the Vite production build.
+      #
+      # This is a critical check. It catches problems that ESLint cannot catch:
+      # - A broken import path (e.g. you renamed a file but forgot to update an import)
+      # - A missing environment variable that the build needs
+      # - Any component that crashes during the build process
+      #
+      # If this step passes, you have high confidence the app will work when deployed.
       - name: Build for production
         run: npm run build
 
-      
+      # ── STEP 6 ──────────────────────────────────────────────────────────────
+      # Upload the build output (the dist/ folder) as a workflow artifact.
+      #
+      # An artifact is a file or folder that GitHub keeps after the run ends.
+      # It serves two purposes:
+      # 1. The deploy workflow can download this instead of rebuilding from scratch.
+      # 2. You can manually download it from the Actions tab to inspect the build.
+      #
+      # retention-days: 7 means GitHub deletes it after 7 days automatically.
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
