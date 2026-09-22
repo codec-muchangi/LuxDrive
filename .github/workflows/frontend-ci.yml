@@ -1,0 +1,61 @@
+
+name: Frontend CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'frontend/**'        # Only trigger if something inside frontend/ changed
+      - '.github/workflows/frontend-ci.yml'  # Also re-run if THIS file changes
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+
+  frontend-checks:
+    name: Lint and Build
+    runs-on: ubuntu-latest
+
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    
+    steps:
+
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      
+      - name: Install dependencies
+        run: npm ci
+
+      
+      - name: Run ESLint
+        run: npm run lint
+
+      
+      - name: Build for production
+        run: npm run build
+
+      
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
