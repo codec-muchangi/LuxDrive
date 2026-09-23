@@ -88,7 +88,7 @@ jobs:
       #   npm ci       — reads package-lock.json exactly as written, fails if
       #                  anything is out of sync. Guarantees reproducible builds.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       # ── STEP 4 ──────────────────────────────────────────────────────────────
       # Run ESLint to check code quality.
