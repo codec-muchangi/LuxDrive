@@ -41,14 +41,16 @@ export default defineConfig({
     // Code-splitting for better performance
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor chunks — split large deps from app code
-          'react-vendor': ['react', 'react-dom'],
-          'router':        ['react-router-dom'],
-          'supabase':      ['@supabase/supabase-js'],
-          'ui-utils':      ['lucide-react', 'react-hot-toast', 'date-fns'],
+        manualChunks: (id) => {
+  if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+    return 'vendor';
+  }
+  if (id.includes('node_modules/react-router-dom')) {
+    return 'router';
+  }
+}
         },
       },
     },
   },
-})
+)
