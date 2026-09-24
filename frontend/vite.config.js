@@ -9,23 +9,22 @@ export default defineConfig({
   resolve: {
     alias: {
       // Clean imports: import X from '@/components/...' instead of '../../..'
-      '@':            fileURLToPath(new URL('./src', import.meta.url)),
-      '@components':  fileURLToPath(new URL('./src/components', import.meta.url)),
-      '@pages':       fileURLToPath(new URL('./src/pages', import.meta.url)),
-      '@hooks':       fileURLToPath(new URL('./src/hooks', import.meta.url)),
-      '@services':    fileURLToPath(new URL('./src/services', import.meta.url)),
-      '@context':     fileURLToPath(new URL('./src/context', import.meta.url)),
-      '@utils':       fileURLToPath(new URL('./src/utils', import.meta.url)),
-      '@lib':         fileURLToPath(new URL('./src/lib', import.meta.url)),
-      '@assets':      fileURLToPath(new URL('./src/assets', import.meta.url)),
-      '@styles':      fileURLToPath(new URL('./src/styles', import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
+      '@pages': fileURLToPath(new URL('./src/pages', import.meta.url)),
+      '@hooks': fileURLToPath(new URL('./src/hooks', import.meta.url)),
+      '@services': fileURLToPath(new URL('./src/services', import.meta.url)),
+      '@context': fileURLToPath(new URL('./src/context', import.meta.url)),
+      '@utils': fileURLToPath(new URL('./src/utils', import.meta.url)),
+      '@lib': fileURLToPath(new URL('./src/lib', import.meta.url)),
+      '@assets': fileURLToPath(new URL('./src/assets', import.meta.url)),
+      '@styles': fileURLToPath(new URL('./src/styles', import.meta.url)),
     },
   },
 
   server: {
     port: 5173,
-    // Proxy API calls to FastAPI backend during development
-    // This avoids CORS issues in dev and matches production routing
+    // Proxy API calls to FastAPI backend during development.
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
@@ -38,19 +37,21 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    // Code-splitting for better performance
+    // Code-splitting for better performance.
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-  if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-    return 'vendor';
-  }
-  if (id.includes('node_modules/react-router-dom')) {
-    return 'router';
-  }
-}
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'vendor'
+          }
+
+          if (id.includes('node_modules/react-router-dom')) {
+            return 'router'
+          }
+
+          return undefined
         },
       },
     },
   },
-)
+})
