@@ -1,35 +1,35 @@
-export const ROUTES = {
-  // ── Public ──────────────────────────────────────────────────────────────
-  HOME:             "/",
-  ABOUT:            "/about",
-  CONTACT:          "/contact",
+// ─────────────────────────────────────────────────────────────────────────────
+// Route constants — single source of truth for all URL paths.
+// Import ROUTES wherever you need to navigate or build a link.
+// Changing a path here updates it everywhere automatically.
+// ─────────────────────────────────────────────────────────────────────────────
 
-  // ── Auth ────────────────────────────────────────────────────────────────
+export const ROUTES = {
+  // Public
+  HOME:             "/",
+
+  // Auth
   LOGIN:            "/login",
   REGISTER:         "/register",
   FORGOT_PASSWORD:  "/forgot-password",
   RESET_PASSWORD:   "/reset-password",
   VERIFY_EMAIL:     "/verify-email",
 
-  // ── Customer (protected) ─────────────────────────────────────────────────
-  CARS:             "/cars",             // ← cars listing page
-  CAR_DETAIL:       "/cars/:id",         // ← car overview dashboard
-  DASHBOARD:        "/cars",             // ← alias: login success lands here
+  // Customer (protected)
+  CARS:             "/cars",
+  CAR_DETAIL:       "/cars/:id",
+  DASHBOARD:        "/dashboard",
   BOOKINGS:         "/bookings",
-  FAVORITES:        "/favorites",
+  ACTIVE_RENTAL:    "/active-rental",
+  PAYMENTS:         "/payments",
   PROFILE:          "/profile",
+  SETTINGS:         "/settings",
 
-  // ── Admin (protected, role=ADMIN) ────────────────────────────────────────
-  ADMIN:            "/admin",
-  ADMIN_CARS:       "/admin/cars",
-  ADMIN_BOOKINGS:   "/admin/bookings",
-  ADMIN_CUSTOMERS:  "/admin/customers",
-  ADMIN_PAYMENTS:   "/admin/payments",
+  // Owner (protected)
+  OWNER_DASHBOARD:  "/owner/dashboard",
+  OWNER_VEHICLES:   "/owner/vehicles",
+  OWNER_EARNINGS:   "/owner/earnings",
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-  /**
-   * Build a concrete car-detail URL from a vehicle id.
-   * Usage: ROUTES.carDetail("abc-123") → "/cars/abc-123"
-   */
-  carDetail: (id) => `/cars/${id}`,
+  // Admin (protected)
+  ADMIN_DASHBOARD:  "/admin/dashboard",
 }
