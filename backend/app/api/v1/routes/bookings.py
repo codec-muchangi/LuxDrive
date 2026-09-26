@@ -1,6 +1,7 @@
 """LUXDRIVE — Bookings Routes skeleton /api/v1/bookings/"""
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+
 from app.core.dependencies import require_active_account
 
 router = APIRouter()

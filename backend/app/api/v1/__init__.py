@@ -4,7 +4,17 @@ Aggregates all route modules under /api/v1
 """
 
 from fastapi import APIRouter
-from app.api.v1.routes import auth, cars, bookings, payments, favorites, reviews, locations, admin
+
+from app.api.v1.routes import (
+    admin,
+    auth,
+    bookings,
+    cars,
+    favorites,
+    locations,
+    payments,
+    reviews,
+)
 
 router = APIRouter()
 

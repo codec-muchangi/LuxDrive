@@ -5,9 +5,10 @@ LUXDRIVE — Authentication Routes
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 from app.core.dependencies import get_current_profile, require_active_account
 from app.database.supabase import get_supabase_client
-from pydantic import BaseModel, EmailStr
 
 router = APIRouter()
 
@@ -72,7 +73,7 @@ async def update_profile(
             .single()
             .execute()
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"message": "Failed to update profile.", "error_code": "UPDATE_FAILED"},

@@ -1,6 +1,7 @@
 """LUXDRIVE — Admin Routes skeleton /api/v1/admin/"""
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+
 from app.core.dependencies import require_admin
 
 router = APIRouter()

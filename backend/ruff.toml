@@ -1,0 +1,31 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Ruff configuration — Smart Auto Cars Backend
+# Ruff is a fast Python linter. This file tells it which folders to skip
+# and which rules to enforce.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Folders ruff should completely ignore
+exclude = [
+    "venv",
+    ".venv",
+    "__pycache__",
+    ".git",
+    "alembic",
+]
+
+# Target Python 3.11
+target-version = "py311"
+
+# Max line length
+line-length = 88
+
+[lint]
+# Rule sets to enable:
+# E = pycodestyle errors
+# F = pyflakes (undefined names, unused imports)
+# I = isort (import ordering)
+select = ["E", "F", "I"]
+
+# Rules to ignore:
+# E501 = line too long (handled by formatter)
+ignore = ["E501"]

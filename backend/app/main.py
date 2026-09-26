@@ -1,107 +1,63 @@
-"""
-LUXDRIVE — FastAPI Application Entry Point
-
-Configures and returns the FastAPI application instance.
-All routers, middleware, CORS, and startup events are registered here.
-
-Run with:
-    uvicorn app.main:app --reload --port 8000
-"""
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
-from contextlib import asynccontextmanager
 
-from app.core.config import get_settings
-from app.api.v1 import router as api_v1_router
+# ─────────────────────────────────────────────────────────────────────────────
+# Smart Auto Cars — FastAPI Application Entry Point
+#
+# This is the root of the backend application.
+# Run locally with: uvicorn main:app --reload
+# API docs available at: http://localhost:8000/docs
+# ─────────────────────────────────────────────────────────────────────────────
+
+app = FastAPI(
+    title="Smart Auto Cars API",
+    description="Vehicle rental platform — Nairobi, Kenya",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# ── CORS Middleware ────────────────────────────────────────────────────────────
+# Allows the React frontend to make requests to this API.
+# In production, replace "*" with your actual frontend domain.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-# ── Lifespan (startup / shutdown) ─────────────────────────────
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+# ── Routes ────────────────────────────────────────────────────────────────────
+
+@app.get("/", tags=["Root"])
+def root():
+    """Root endpoint — confirms the API is running."""
+    return {
+        "message": "Smart Auto Cars API",
+        "status": "running",
+        "version": "1.0.0",
+    }
+
+
+@app.get("/health", tags=["Health"])
+def health_check():
     """
-    Startup and shutdown logic.
-    Replaces the deprecated @app.on_event("startup") pattern.
+    Health check endpoint.
+    Used by the CI workflow and deployment platform to verify the service is up.
+    Returns 200 OK when the application is healthy.
     """
-    settings = get_settings()
-    print(f"\n{'='*50}")
-    print(f"  LUXDRIVE API — {settings.APP_VERSION}")
-    print(f"  Environment: {settings.APP_ENV}")
-    print(f"  Supabase:    {settings.SUPABASE_URL[:40]}...")
-    print(f"  CORS origins: {settings.allowed_origins_list}")
-    print(f"{'='*50}\n")
-
-    yield  # Application runs here
-
-    # Shutdown
-    print("\nLUXDRIVE API shutting down...")
+    return {
+        "status": "healthy",
+        "service": "Smart Auto Cars API",
+    }
 
 
-# ── Create FastAPI app ─────────────────────────────────────────
-def create_app() -> FastAPI:
-    settings = get_settings()
-
-    app = FastAPI(
-        title="LUXDRIVE API",
-        description="Luxury Car Rental Platform — Backend API",
-        version=settings.APP_VERSION,
-        # Hide docs in production for security
-        docs_url="/docs"     if not settings.is_production else None,
-        redoc_url="/redoc"   if not settings.is_production else None,
-        openapi_url="/openapi.json" if not settings.is_production else None,
-        lifespan=lifespan,
-    )
-
-    # ── CORS Middleware ──────────────────────────────────────
-    # Must be registered BEFORE routers
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.allowed_origins_list,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["*"],
-        expose_headers=["X-Total-Count", "X-Page", "X-Page-Size"],
-    )
-
-    # ── Trusted Hosts (production hardening) ─────────────────
-    if settings.is_production:
-        app.add_middleware(
-            TrustedHostMiddleware,
-            allowed_hosts=["luxdrive.co.ke", "*.luxdrive.co.ke", "api.luxdrive.co.ke"],
-        )
-
-    # ── API Routers ──────────────────────────────────────────
-    app.include_router(api_v1_router, prefix="/api/v1")
-
-    # ── Health Check ─────────────────────────────────────────
-    @app.get("/health", tags=["System"])
-    async def health_check():
-        """
-        Health check endpoint.
-        Used by load balancers and monitoring services.
-        """
-        return JSONResponse(
-            status_code=200,
-            content={
-                "status":  "healthy",
-                "service": "LUXDRIVE API",
-                "version": settings.APP_VERSION,
-                "env":     settings.APP_ENV,
-            }
-        )
-
-    @app.get("/", tags=["System"])
-    async def root():
-        return {
-            "message": "LUXDRIVE API",
-            "version": settings.APP_VERSION,
-            "docs":    "/docs",
-        }
-
-    return app
-
-
-# ── App instance ───────────────────────────────────────────────
-app = create_app()
+# ── Future routers (added as we build each module) ────────────────────────────
+# from app.routers import auth, vehicles, bookings, payments, tracking
+# app.include_router(auth.router,      prefix="/api/v1/auth",     tags=["Auth"])
+# app.include_router(vehicles.router,  prefix="/api/v1/vehicles", tags=["Vehicles"])
+# app.include_router(bookings.router,  prefix="/api/v1/bookings", tags=["Bookings"])
+# app.include_router(payments.router,  prefix="/api/v1/payments", tags=["Payments"])
+# app.include_router(tracking.router,  prefix="/api/v1/tracking", tags=["Tracking"])
